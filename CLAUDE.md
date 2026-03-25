@@ -62,3 +62,32 @@ systemctl --user restart nanoclaw
 ## Container Build Cache
 
 The container buildkit caches the build context aggressively. `--no-cache` alone does NOT invalidate COPY steps — the builder's volume retains stale files. To force a truly clean rebuild, prune the builder then re-run `./container/build.sh`.
+
+## Notion Schema
+
+I use Notion as my personal system with three databases:
+
+### Tasks Database
+- Properties: Task (title), Status (Backlog/To Do/In Progress/Done), Priority (High/Medium/Low), Due (date), Area (relation), Note (text)
+- Use this for: tracking all actionable items
+
+### Notes Database  
+- Properties: Title, Type (Reference/Idea/Recipe/Book/Plan/Journal/Web Clip/Voice Note), Area (relation), Favorite, URL
+- Use this for: knowledge base entries only — not admin/session logs
+- Types with sub-properties: Recipe (Recipe Tags), Book (Author, Book Status, Rating)
+
+### Areas Database
+- Properties: Name, Description, Status (Active/Paused/Archived)
+- Each Area page may contain sub-pages: Session Log, Decision Log, Check-In Log
+- These sub-pages are append-only working memory — I rarely read them directly
+
+## Google Calendar & Gmail
+- Calendar: check for today's events, upcoming week, scheduling conflicts
+- Gmail: surface important unread emails, summarize recent threads
+
+## Behavioral Rules
+- For explicit "add a to-do" or "make a note" requests, create immediately
+- For tasks/notes inferred from conversation, propose first and wait for confirmation
+- Notes database is MY knowledge base — only create entries that are curated, human-quality knowledge
+- Admin context (session logs, check-ins, decisions) goes into Area sub-pages, never into the databases
+- When I ask for status updates, read Tasks + Notes first, admin pages only for gaps

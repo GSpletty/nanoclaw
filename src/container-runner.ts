@@ -26,6 +26,7 @@ import {
   stopContainer,
 } from './container-runtime.js';
 import { detectAuthMode } from './credential-proxy.js';
+import { readEnvFile } from './env.js';
 import { validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
 
@@ -199,6 +200,21 @@ function buildVolumeMounts(
     readonly: false,
   });
 
+  // Mount Google Workspace MCP config (tokens + credentials) so the MCP server
+  // can authenticate and persist refreshed tokens across container runs.
+  const googleMcpConfigDir = path.join(
+    process.env.HOME || '/root',
+    '.config',
+    'google-workspace-mcp',
+  );
+  if (fs.existsSync(googleMcpConfigDir)) {
+    mounts.push({
+      hostPath: googleMcpConfigDir,
+      containerPath: '/home/node/.config/google-workspace-mcp',
+      readonly: false,
+    });
+  }
+
   // Additional mounts validated against external allowlist (tamper-proof from containers)
   if (group.containerConfig?.additionalMounts) {
     const validatedMounts = validateAdditionalMounts(
@@ -236,6 +252,21 @@ function buildContainerArgs(
     args.push('-e', 'ANTHROPIC_API_KEY=placeholder');
   } else {
     args.push('-e', 'CLAUDE_CODE_OAUTH_TOKEN=placeholder');
+  }
+
+  // Inject integration credentials so MCP servers (Notion, Google) work inside containers.
+  // These are read from .env on the host and passed explicitly — never via the mounted .env
+  // (which is shadowed by /dev/null to prevent accidental credential exposure).
+  const integrationEnvKeys = [
+    'NOTION_TOKEN',
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'GOOGLE_WORKSPACE_SERVICES',
+  ];
+  const integrationEnv = readEnvFile(integrationEnvKeys);
+  for (const key of integrationEnvKeys) {
+    const val = integrationEnv[key];
+    if (val) args.push('-e', `${key}=${val}`);
   }
 
   // Runtime-specific args for host gateway resolution
@@ -507,11 +538,7 @@ export async function runContainerAgent(
         // Full input is only included at verbose level to avoid
         // persisting user conversation content on every non-zero exit.
         if (isVerbose) {
-          logLines.push(
-            `=== Input ===`,
-            JSON.stringify(input, null, 2),
-            ``,
-          );
+          logLines.push(`=== Input ===`, JSON.stringify(input, null, 2), ``);
         } else {
           logLines.push(
             `=== Input Summary ===`,

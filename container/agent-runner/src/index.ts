@@ -423,6 +423,22 @@ async function runQuery(
             NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
           },
         },
+        notion: {
+          command: 'npx',
+          args: ['-y', '@notionhq/notion-mcp-server'],
+          env: {
+            NOTION_TOKEN: process.env.NOTION_TOKEN ?? '',
+          },
+        },
+        'google-workspace': {
+          command: 'npx',
+          args: ['-y', '@dguido/google-workspace-mcp'],
+          env: {
+            GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? '',
+            GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? '',
+            GOOGLE_WORKSPACE_SERVICES: process.env.GOOGLE_WORKSPACE_SERVICES ?? 'calendar,gmail',
+          },
+        },
       },
       hooks: {
         PreCompact: [{ hooks: [createPreCompactHook(containerInput.assistantName)] }],
